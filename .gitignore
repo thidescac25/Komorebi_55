@@ -1,0 +1,45 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+eggs/
+wheels/
+*.egg
+develop-eggs/
+
+# Caches and logs
+__pycache__/
+.cache/
+*.log
+htmlcov/
+.pytest_cache/
+
+# Python files
+*.py[cod]
+*$py.class
+
+# IDEs, editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# Streamlit
+.streamlit/
+
+# Jupyter
+.ipynb_checkpoints/
