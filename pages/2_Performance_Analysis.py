@@ -1,3 +1,5 @@
+# 2_Performance_Analysis.py
+
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -12,8 +14,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 # Importer les modules personnalisés
 from src.data_loader import load_portfolio_data, get_stock_data, get_historical_data, load_sector_country_data
 from src.stock_utils import get_currency_mapping
-from src.ui_components import apply_custom_css, create_scrolling_ticker, create_title, create_footer, create_metric_card
-from src.visualization import plot_performance, plot_portfolio_simulation, calculate_portfolio_stats, display_top_contributors
+from src.ui_components import apply_custom_css, create_scrolling_ticker, create_footer, create_metric_card, create_title
+from src.visualization import plot_performance, plot_portfolio_simulation, calculate_portfolio_stats, display_top_contributors, create_bar_charts
 
 # Configuration de la page
 st.set_page_config(
@@ -35,12 +37,14 @@ st.markdown(
       .komorebi-table th,
       .komorebi-table td {
         text-align: center !important;
+        padding: 4px !important;  /* Réduire le padding */
       }
-      /* Met le tableau à 90% de la largeur du conteneur, le centre, et fixe le layout */
+      /* Met le tableau à 80% de la largeur du conteneur, le centre, et fixe le layout */
       .komorebi-table {
-        width: 90% !important;
+        width: 80% !important;
         margin: 0 auto !important;
         table-layout: fixed !important;
+        font-size: 0.85em !important;  /* Réduire la taille de la police */
       }
     </style>
     """,
@@ -48,7 +52,7 @@ st.markdown(
 )
 
 # Titre
-st.markdown(create_title("Komorebi Investments 55 - Analyse de Performance", "page 3/3"), unsafe_allow_html=True)
+st.markdown(create_title("Analyse de la Performance depuis le début de l'investissement <span style='font-size:0.6em;'>(page 2/2)</span>"), unsafe_allow_html=True)
 
 # Chargement des données
 portfolio_df = load_portfolio_data()
@@ -84,7 +88,7 @@ with col2:
         "NASDAQ": "^IXIC",
         "EURO STOXX 50": "^STOXX50E"
     }
-    selected = st.multiselect("Indices de référence", options=list(indices_options.keys()), default=["CAC 40"])
+    selected = st.multiselect("Indices de référence", options=list(indices_options.keys()), default=["CAC 40", "S&P 500"])
     reference_indices = {k: indices_options[k] for k in selected}
 
 end_date = datetime.now()
@@ -93,7 +97,6 @@ end_date = datetime.now()
 with st.spinner("Chargement des données historiques..."):
     hist_data = get_historical_data(tickers, start_date, end_date)
 
-# <<< Correction : passer reference_indices en argument nommé >>>
 perf_fig = plot_performance(
     hist_data,
     reference_indices=reference_indices,
@@ -152,7 +155,7 @@ perf_df = pd.DataFrame(perf_list)
 analysis_df = pd.merge(df_sc, perf_df, on='Ticker')
 
 # --- Performances par secteur ---
-st.markdown("### Performances par secteur")
+st.markdown("<h5 style='font-size:16px;'>Performance par secteur</h5>", unsafe_allow_html=True)
 sector_stats = (
     analysis_df.groupby('Sector')
     .agg({'Ticker':'count','Variation(%)':['mean','min','max']})
@@ -175,7 +178,7 @@ sector_html = (
 st.markdown(sector_html, unsafe_allow_html=True)
 
 # --- Performances par pays ---
-st.markdown("### Performances par pays")
+st.markdown("<h5 style='font-size:16px;'>Performance par pays</h5>", unsafe_allow_html=True)
 country_stats = (
     analysis_df.groupby('Country')
     .agg({'Ticker':'count','Variation(%)':['mean','min','max']})
@@ -196,6 +199,29 @@ country_html = (
       .to_html()
 )
 st.markdown(country_html, unsafe_allow_html=True)
+
+# Ajouter plus d'espace avant la section "Répartition Sectorielle et Géographique"
+st.markdown("<div style='height:50px'></div>", unsafe_allow_html=True)
+
+# Ajout de la section "Répartition Sectorielle et Géographique" à la fin de la page
+st.markdown('<div class="section-title">Répartition Sectorielle et Géographique</div>', unsafe_allow_html=True)
+
+# Allocation égale pour chaque action (repris du fichier 1_Portfolio_Overview.py)
+df_sc["Weight"] = 1.0 / len(df_sc)
+
+# Créer les graphiques à barres horizontales
+fig_sector, fig_geo = create_bar_charts(df_sc)
+
+# Agrandir la hauteur des graphiques
+fig_sector.update_layout(height=600)
+fig_geo.update_layout(height=600)
+
+# Afficher les graphiques côte à côte
+col_chart1, col_chart2 = st.columns(2)
+with col_chart1:
+    st.plotly_chart(fig_sector, use_container_width=True)
+with col_chart2:
+    st.plotly_chart(fig_geo, use_container_width=True)
 
 # Footer
 st.markdown(create_footer(), unsafe_allow_html=True)

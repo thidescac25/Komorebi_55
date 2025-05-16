@@ -217,14 +217,17 @@ def load_metrics(tickers):
         DataFrame: DataFrame avec les métriques pour chaque ticker
     """
     rows = []
+    
     for ticker in tickers:
         try:
             info = yf.Ticker(ticker).info
+            
             # helpers
             def txt(k): return info.get(k, None)
             def num(k):
                 v = info.get(k, None)
                 return float(v) if v is not None else None
+            
             rows.append({
                 "Ticker":           ticker,
                 "Nom complet":      txt("longName"),
@@ -249,20 +252,21 @@ def load_metrics(tickers):
                 "Ticker":           ticker,
                 "Nom complet":      f"Erreur : {str(e)}",
                 "Pays":             None,
-                "Secteur":          None, 
+                "Secteur":          None,
                 "Industrie":        None,
-                "Exchange":         None,
+                "Exchange":        None,
                 "Devise":           None,
                 "Prix Actuel":      None,
                 "Clôture Prec.":    None,
                 "52-sem. Bas":      None,
-                "52-sem. Haut":     None,
+                "52-sem. Haut":      None,
                 "Moyenne 50j":      None,
-                "Moyenne 200j":     None,
-                "Market Cap":       None,
-                "PER (TTM)":        None,
-                "Div Yield":        None,
-                "Reco Analyses":    None,
+                "Moyenne 200j":      None,
+                "Market Cap":      None,
+                "PER (TTM)":       None,
+                "Div Yield":       None,
+                "Reco Analyses":   None,
             })
+    
     dfm = pd.DataFrame(rows).set_index("Ticker")
     return dfm

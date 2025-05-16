@@ -1,3 +1,5 @@
+# stock_utils.py
+
 # Utilitaires pour la gestion des devises et autres fonctions boursières
 
 # Mapping des devises pour chaque ticker

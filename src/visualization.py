@@ -368,7 +368,7 @@ def create_bar_charts(df, weight_column="Weight"):
                      '#21618C', '#2874A6', '#5499C7', '#7FB3D5', '#A9CCE3', '#D4E6F1', '#EBF5FB', '#AED6F1',
                      '#3498DB', '#2E86C1', '#2874A6']
     
-    # Graphique sectoriel - barres horizontales
+    # Graphique secteur - barres horizontales
     fig_sector = px.bar(
         sector_alloc,
         y="Sector",  # Axe Y pour les barres horizontales
