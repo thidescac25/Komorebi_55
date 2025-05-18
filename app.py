@@ -39,7 +39,7 @@ st.markdown(create_title("Komorebi Investments 55 – Présentation <span style=
 # ─── Chargement des données ───────────────────────────────────────────────────
 portfolio_df = load_portfolio_data()
 currency_mapping = get_currency_mapping()
-dividend_yields   = get_dividend_yields()
+dividend_yields = get_dividend_yields()
 
 @st.cache_data(ttl=60)
 def get_all_stock_data(tickers):
@@ -53,7 +53,7 @@ stock_data_dict = get_all_stock_data(tickers)
 
 # Charger secteur/pays pour la table
 df_sc = load_sector_country_data(tickers)
-sector_map  = dict(zip(df_sc["Ticker"], df_sc["Sector"]))
+sector_map = dict(zip(df_sc["Ticker"], df_sc["Sector"]))
 country_map = dict(zip(df_sc["Ticker"], df_sc["Country"]))
 
 # ─── Bandeau défilant ─────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ company = st.selectbox("", portfolio_df["Société"].tolist(), label_visibility=
 row = portfolio_df[portfolio_df["Société"] == company].iloc[0]
 ticker = row["Ticker"]
 stock_data = get_stock_data(ticker, detailed=True)
-currency   = determine_currency(ticker)
+currency = determine_currency(ticker)
 
 # ─── En-tête société ─────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -93,17 +93,17 @@ st.markdown('<div class="section-title">Statistiques du jour</div>', unsafe_allo
 
 cols = st.columns(5)
 metrics = [
-    ("Valorisation",   stock_data["pe_ratio"],        "PER",        False),
-    ("Rendement",      stock_data["dividend_yield"],  "Dividende",  True),
-    ("Performance",    stock_data["ytd_change"],      "YTD",        True),
-    ("BPA",            stock_data["eps"],             "Par action", False),
-    ("Capitalisation", stock_data["market_cap"],      "Milliards",  False),
+    ("Valorisation", stock_data["pe_ratio"], "PER", False),
+    ("Rendement", stock_data["dividend_yield"], "Dividende", True),
+    ("Performance", stock_data["ytd_change"], "YTD", True),
+    ("BPA", stock_data["eps"], "Par action", False),
+    ("Capitalisation", stock_data["market_cap"], "Milliards", False),
 ]
 beige = "#f9f5f2"
 
 for col, (title, val, subtitle, is_pct) in zip(cols, metrics):
     color = "#28a745" if is_pct and val >= 0 else "#dc3545" if is_pct else "#102040"
-    disp  = f"{val:+.2f}%" if is_pct else f"{val:.2f}"
+    disp = f"{val:+.2f}%" if is_pct else f"{val:.2f}"
     with col:
         st.markdown(f"""
         <div style="background:{beige}; padding:20px; border-radius:10px; text-align:center;">
@@ -120,7 +120,7 @@ st.markdown('<div class="section-title">Performance sur 52 semaines</div>', unsa
 
 hist = stock_data.get("history", pd.DataFrame())
 if not hist.empty:
-    sel, *_ = st.radio("Période", ["1 mois","6 mois","1 an"], horizontal=True, index=2)
+    sel, *_ = st.radio("Période", ["1 mois", "6 mois", "1 an"], horizontal=True, index=2)
     fig, *_ = create_stock_chart(hist, ticker, currency, sel)
     st.plotly_chart(fig, use_container_width=True)
 else:
@@ -135,12 +135,12 @@ comp = []
 for _, r in portfolio_df.iterrows():
     sd = stock_data_dict.get(r["Ticker"], {})
     comp.append({
-        "Société":               r["Société"],
+        "Société": r["Société"],
         "Variation (%) du jour": sd.get("percent_change", 0),
-        "Prix":                  sd.get("current_price", 0),
-        "Devise":                determine_currency(r["Ticker"]),
-        "Secteur":               sector_map.get(r["Ticker"], "N/A"),
-        "Pays":                  country_map.get(r["Ticker"], "N/A"),
+        "Prix": sd.get("current_price", 0),
+        "Devise": determine_currency(r["Ticker"]),
+        "Secteur": sector_map.get(r["Ticker"], "N/A"),
+        "Pays": country_map.get(r["Ticker"], "N/A"),
     })
 comp_df = pd.DataFrame(comp)
 comp_df.index = range(1, len(comp_df) + 1)
@@ -235,11 +235,13 @@ st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
 # ─── Performance du jour des valeurs ───────────────────────────────────────────
 st.markdown('<div class="section-title">Performance du jour des valeurs</div>', unsafe_allow_html=True)
 
-n     = len(comp_df)
-pos   = sum(v>0 for v in comp_df["Variation (%) du jour"])
-neg   = sum(v<0 for v in comp_df["Variation (%) du jour"])
-neu   = n - pos - neg
-pos_p = pos/n*100; neg_p = neg/n*100; neu_p = neu/n*100
+n = len(comp_df)
+pos = sum(v > 0 for v in comp_df["Variation (%) du jour"])
+neg = sum(v < 0 for v in comp_df["Variation (%) du jour"])
+neu = n - pos - neg
+pos_p = pos / n * 100
+neg_p = neg / n * 100
+neu_p = neu / n * 100
 
 c1, c2, c3, c4 = st.columns(4)
 with c1:
