@@ -68,6 +68,9 @@ stock_data_dict = get_all_stock_data(tickers)
 # Ticker défilant
 st.markdown(create_scrolling_ticker(portfolio_df, stock_data_dict, currency_mapping), unsafe_allow_html=True)
 
+# Ajout d'espace après le bandeau défilant
+st.markdown('<div style="height:35px;"></div>', unsafe_allow_html=True)  # Ajout de 35px d'espace
+
 # Présentation performance
 st.markdown('<div class="section-title">Présentation de la Performance</div>', unsafe_allow_html=True)
 col1, col2 = st.columns([3, 1])

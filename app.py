@@ -62,6 +62,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# ─── Ajout d'espace après le bandeau défilant ──────────────────────────────────
+st.markdown('<div style="height:30px;"></div>', unsafe_allow_html=True)  # Ajout de 30px d'espace
+
 # ─── Sélecteur de société ────────────────────────────────────────────────────
 st.markdown('<div class="select-label">Sélectionnez une société</div>', unsafe_allow_html=True)
 company = st.selectbox("", portfolio_df["Société"].tolist(), label_visibility="collapsed")
@@ -78,7 +81,8 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ─── Business Model ─────────────────────────────────────────────────────────
-st.markdown('<div class="section-container">', unsafe_allow_html=True)
+# Réduction de l'espace entre l'en-tête et le business model
+st.markdown('<div class="section-container" style="padding-top:10px;">', unsafe_allow_html=True)  # Réduit le padding en haut
 st.markdown('<div class="section-title">Business Model de la société</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="business-text">{row["Business_models"]}</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
