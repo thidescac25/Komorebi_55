@@ -1,8 +1,3 @@
-# stock_utils.py
-
-# Utilitaires pour la gestion des devises et autres fonctions boursières
-
-# Mapping des devises pour chaque ticker
 def get_currency_mapping():
     """
     Retourne un dictionnaire de mapping entre tickers et devises.

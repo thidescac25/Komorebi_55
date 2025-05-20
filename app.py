@@ -81,7 +81,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ─── Business Model ─────────────────────────────────────────────────────────
-# Réduction de l'espace entre l'en-tête et le business model
 st.markdown('<div class="section-container" style="padding-top:10px;">', unsafe_allow_html=True)  # Réduit le padding en haut
 st.markdown('<div class="section-title">Business Model de la société</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="business-text">{row["Business_models"]}</div>', unsafe_allow_html=True)
@@ -178,7 +177,7 @@ fig = go.Figure()
 
 # Ajouter le tableau principal avec le nouvel ordre des colonnes
 fig.add_trace(go.Table(
-    columnwidth=[40, 200, 120, 80, 60, 150, 120],  # Élargir la colonne Société
+    columnwidth=[40, 200, 120, 80, 60, 150, 120],  
     header=dict(
         values=[
             '<b>Index</b>', 
@@ -190,7 +189,7 @@ fig.add_trace(go.Table(
             '<b>Pays</b>'
         ],
         font=dict(size=14, color='white'),
-        fill_color='#693112',  # Marron foncé pour les en-têtes
+        fill_color='#693112',  
         align=['center', 'center', 'center', 'center', 'center', 'center', 'center'],
         height=40
     ),
@@ -204,18 +203,18 @@ fig.add_trace(go.Table(
             sector_vals,
             country_vals
         ],
-        font=dict(size=13, color='#102040', family="Arial"),  # Texte en bleu foncé et en gras
+        font=dict(size=13, color='#102040', family="Arial"),  
         fill_color=[
             'white', 
             'white',
-            bg_colors,  # Appliquer les couleurs de fond pour la colonne variation
+            bg_colors, 
             'white',
             'white', 
             'white', 
             'white'
         ],
         align=['center', 'left', 'center', 'center', 'center', 'center', 'center'],
-        line_color='lightgrey',  # Légère bordure entre les cellules
+        line_color='lightgrey',  
         height=30
     )
 ))

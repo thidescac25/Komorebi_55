@@ -1,5 +1,3 @@
-# ui_components.py
-
 import streamlit as st
 import base64
 
@@ -334,7 +332,7 @@ def create_metric_card(title, value, subtitle=None, is_currency=False, currency=
         elif is_percentage:
             formatted_value = f"{sign}{value:.2f}%"
     else:
-        formatted_value = value  # Conserver la valeur d'origine si elle n'est pas numérique
+        formatted_value = value 
     
     # Créer le HTML
     html = f"""

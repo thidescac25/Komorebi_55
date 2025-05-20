@@ -28,8 +28,6 @@ st.set_page_config(
 # Appliquer le CSS global perso
 apply_custom_css()
 
-# CSS pour centrer cellules et en-têtes dans nos tables,
-# fixer la largeur du tableau et le centrer
 st.markdown(
     """
     <style>
@@ -67,9 +65,7 @@ stock_data_dict = get_all_stock_data(tickers)
 
 # Ticker défilant
 st.markdown(create_scrolling_ticker(portfolio_df, stock_data_dict, currency_mapping), unsafe_allow_html=True)
-
-# Ajout d'espace après le bandeau défilant
-st.markdown('<div style="height:35px;"></div>', unsafe_allow_html=True)  # Ajout de 35px d'espace
+st.markdown('<div style="height:35px;"></div>', unsafe_allow_html=True)  
 
 # Présentation performance
 st.markdown('<div class="section-title">Présentation de la Performance</div>', unsafe_allow_html=True)
@@ -202,20 +198,12 @@ country_html = (
       .to_html()
 )
 st.markdown(country_html, unsafe_allow_html=True)
-
-# Ajouter plus d'espace avant la section "Répartition Sectorielle et Géographique"
 st.markdown("<div style='height:50px'></div>", unsafe_allow_html=True)
-
-# Ajout de la section "Répartition Sectorielle et Géographique" à la fin de la page
 st.markdown('<div class="section-title">Répartition Sectorielle et Géographique</div>', unsafe_allow_html=True)
-
-# Allocation égale pour chaque action (repris du fichier 1_Portfolio_Overview.py)
 df_sc["Weight"] = 1.0 / len(df_sc)
 
 # Créer les graphiques à barres horizontales
 fig_sector, fig_geo = create_bar_charts(df_sc)
-
-# Agrandir la hauteur des graphiques
 fig_sector.update_layout(height=600)
 fig_geo.update_layout(height=600)
 

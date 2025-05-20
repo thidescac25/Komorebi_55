@@ -596,16 +596,9 @@ def display_top_contributors(df_perf, top_n=15):
         st.warning("Pas assez de données pour calculer les contributeurs.")
         return
     
-    # Ajouter de l'espace avant le titre
     st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
-    
-    # Un seul titre principal avec le nouveau libellé
     st.markdown('<div class="section-title">Contributeurs à la performance</div>', unsafe_allow_html=True)
-    
-    # Ajouter un peu d'espace après le titre principal
     st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-    
-    # Séparer les contributeurs positifs et négatifs
     positive_contributors = df_perf[df_perf['Contribution'] > 0].head(top_n)
     negative_contributors = df_perf[df_perf['Contribution'] < 0].sort_values(by='Contribution').head(top_n)
     
@@ -628,21 +621,21 @@ def display_top_contributors(df_perf, top_n=15):
                 cells=dict(
                     values=[
                         positive_contributors['Ticker'],
-                        positive_contributors['Name'],  # Utiliser le nom réel au lieu du ticker
+                        positive_contributors['Name'],  
                         positive_contributors['Performance (%)'].round(2),
                         positive_contributors['Contribution'].round(2)
                     ],
-                    font=dict(size=13, color='#333333'),  # Texte plus foncé
+                    font=dict(size=13, color='#333333'),  
                     align=['center', 'left', 'right', 'right'],
                     format=[None, None, '.2f', '.2f'],
                     fill_color=['#F5F5F5'],
-                    height=30  # Augmenter la hauteur des cellules
+                    height=30  
                 )
             )])
             
             fig_pos.update_layout(
                 margin=dict(l=5, r=5, t=5, b=5),
-                height=min(40 * len(positive_contributors) + 50, 600)  # Augmenter la hauteur
+                height=min(40 * len(positive_contributors) + 50, 600)  
             )
             
             st.plotly_chart(fig_pos, use_container_width=True)
@@ -665,21 +658,21 @@ def display_top_contributors(df_perf, top_n=15):
                 cells=dict(
                     values=[
                         negative_contributors['Ticker'],
-                        negative_contributors['Name'],  # Utiliser le nom réel au lieu du ticker
+                        negative_contributors['Name'],  
                         negative_contributors['Performance (%)'].round(2),
                         negative_contributors['Contribution'].round(2)
                     ],
-                    font=dict(size=13, color='#333333'),  # Texte plus foncé
+                    font=dict(size=13, color='#333333'), 
                     align=['center', 'left', 'right', 'right'],
                     format=[None, None, '.2f', '.2f'],
                     fill_color=['#F5F5F5'],
-                    height=30  # Augmenter la hauteur des cellules
+                    height=30  
                 )
             )])
             
             fig_neg.update_layout(
                 margin=dict(l=5, r=5, t=5, b=5),
-                height=min(40 * len(negative_contributors) + 50, 600)  # Augmenter la hauteur
+                height=min(40 * len(negative_contributors) + 50, 600) 
             )
             
             st.plotly_chart(fig_neg, use_container_width=True)
