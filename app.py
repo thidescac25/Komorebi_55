@@ -1,10 +1,15 @@
+# ---- Imports principaux ----
 import streamlit as st
 import pandas as pd
+import numpy as np
 import sys
 import os
 import plotly.graph_objects as go
-import numpy as np
+import feedparser
+from datetime import datetime, timedelta
+from urllib.parse import quote_plus
 
+# ---- Imports depuis les modules locaux ----
 # Ajouter src/ au chemin d'importation
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
@@ -275,6 +280,241 @@ with c4:
         <div class="metric-subtitle">valeurs stables</div>
       </div>
     """, unsafe_allow_html=True)
+
+# ─── Actualités des sociétés ───────────────────────────────────────────────────
+st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
+st.markdown('<div class="section-title">Actualités boursières des sociétés du Portefeuille</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="select-label">Sélectionnez une société pour voir ses actualités financières</div>', unsafe_allow_html=True)
+news_company = st.selectbox("", portfolio_df["Société"].tolist(), label_visibility="collapsed", key="news_company_selector")
+
+news_row = portfolio_df[portfolio_df["Société"] == news_company].iloc[0]
+news_ticker = news_row["Ticker"]
+
+@st.cache_data(ttl=3600)
+def get_company_news(company_name: str, ticker: str):
+    is_french = any(suffix in ticker for suffix in ['.PA', '.PAR', '.PARIS'])
+    is_japanese = any(suffix in ticker for suffix in ['.T', '.TYO', '.TOKYO', '.JP'])
+    
+    # Obtenir le secteur et pays de la société depuis les dictionnaires
+    company_sector = sector_map.get(ticker, "")
+    company_country = country_map.get(ticker, "")
+    
+    # Ticker sans suffixe pour les recherches
+    ticker_clean = ticker.split('.')[0]
+    
+    # Requêtes Google News optimisées pour trouver au moins 3 articles
+    google_news_queries = [
+        f"{company_name} {ticker_clean} stock",
+        f"{company_name} bourse financial news",
+        f"{company_name} {company_sector} market"
+    ]
+    
+    # Construire les flux de base
+    base_feeds = [
+        f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker}&region=US&lang=en-US",
+        f"https://seekingalpha.com/api/sa/combined/{ticker}.xml",
+        f"https://feeds.finviz.com/rss/news.ashx?v=1&s={ticker}"
+    ]
+    
+    # Ajouter les requêtes Google News
+    for query in google_news_queries:
+        encoded_query = query.replace(" ", "+")
+        base_feeds.append(f"https://news.google.com/rss/search?q={encoded_query}&hl=en-US&gl=US&ceid=US:en")
+    
+    rss_feeds = base_feeds.copy()
+    
+    # Ajouter des flux spécifiques selon le pays
+    if is_french:
+        french_queries = [
+            f"{company_name} bourse CAC actualité",
+            f"{company_name} finance {ticker_clean}"
+        ]
+        
+        rss_feeds.extend([
+            f"https://www.easybourse.com/bourse/services/flux-rss/societe/{ticker.lower()}.rss",
+            f"https://www.abcbourse.com/rss/valeurs/{ticker.lower()}",
+            f"https://www.abcbourse.com/rss/analyses/{ticker.lower()}",
+            "https://www.tradingsat.com/rssbourse.xml"
+        ])
+        
+        for query in french_queries:
+            encoded_query = query.replace(" ", "+")
+            rss_feeds.append(f"https://news.google.com/rss/search?q={encoded_query}&hl=fr-FR&gl=FR&ceid=FR:fr")
+            
+    elif is_japanese:
+        japanese_queries = [
+            f"{company_name} {ticker_clean} japan stock",
+            f"{company_name} nikkei tokyo"
+        ]
+        
+        rss_feeds.extend([
+            "https://www.jpx.co.jp/english/news/rss/index.xml",
+            "https://asia.nikkei.com/rss/feed/index"
+        ])
+        
+        for query in japanese_queries:
+            encoded_query = query.replace(" ", "+")
+            rss_feeds.append(f"https://news.google.com/rss/search?q={encoded_query}&hl=en-US&gl=US&ceid=US:en")
+    
+    news_list = []
+    cutoff_time = datetime.utcnow() - timedelta(hours=48)
+    min_articles_needed = 3
+    articles_found = 0
+    
+    # Parcourir les flux jusqu'à trouver suffisamment d'articles
+    for feed_url in rss_feeds:
+        if articles_found >= min_articles_needed:
+            break
+            
+        try:
+            feed = feedparser.parse(feed_url)
+            for entry in feed.entries[:10]:  # Limiter à 10 articles par flux pour l'efficacité
+                if articles_found >= min_articles_needed:
+                    break
+                    
+                if hasattr(entry, 'title'):
+                    title_lower = entry.title.lower()
+                    
+                    company_parts = company_name.lower().split()
+                    ticker_parts = ticker.lower().split('.')
+                    company_name_lower = company_name.lower()
+                    ticker_lower = ticker.split('.')[0].lower()
+                    
+                    match_found = False
+                    
+                    # Logique de filtre adaptée selon la source
+                    if "tradingsat" in feed_url:
+                        match_found = company_name_lower in title_lower or ticker_lower in title_lower
+                    elif ("jpx" in feed_url or "nikkei" in feed_url) and is_japanese:
+                        if any(part in title_lower for part in company_parts if len(part) > 2):
+                            match_found = True
+                        elif "tokyo" in title_lower or "nikkei" in title_lower or "japan" in title_lower:
+                            match_found = True
+                    elif any(part in title_lower for part in company_parts if len(part) > 2):
+                        match_found = True
+                    elif any(part in title_lower for part in ticker_parts if len(part) > 1):
+                        match_found = True
+                    
+                    if match_found:
+                        try:
+                            entry_time = None
+                            if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                                entry_time = datetime(*entry.published_parsed[:6])
+                            elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
+                                entry_time = datetime(*entry.updated_parsed[:6])
+                            
+                            if entry_time and entry_time >= cutoff_time:
+                                source = "Source financière"
+                                if hasattr(entry, 'source') and hasattr(entry.source, 'title'):
+                                    source = entry.source.title
+                                elif "easybourse" in feed_url:
+                                    source = "EasyBourse"
+                                elif "abcbourse" in feed_url:
+                                    source = "ABCBourse"
+                                elif "tradingsat" in feed_url:
+                                    source = "TradingSat"
+                                elif "jpx" in feed_url:
+                                    source = "Japan Exchange Group"
+                                elif "nikkei" in feed_url:
+                                    source = "Nikkei Asia"
+                                elif "google" in feed_url:
+                                    source = "Google News"
+                                
+                                # Éviter les doublons
+                                if not any(item['title'] == entry.title for item in news_list):
+                                    news_list.append({
+                                        'title': entry.title,
+                                        'link': entry.link,
+                                        'date': entry_time.strftime("%d/%m/%Y %H:%M"),
+                                        'source': source
+                                    })
+                                    articles_found += 1
+                        except (AttributeError, TypeError):
+                            continue
+        except Exception as e:
+            if st.session_state.get('dev_mode', False):
+                st.error(f"Erreur lors de la récupération du flux {feed_url}: {str(e)}")
+            continue
+    
+    # Si aucun article trouvé, essayer une dernière requête générique
+    if not news_list:
+        try:
+            generic_query = f"{company_name} financial news"
+            encoded_query = generic_query.replace(" ", "+")
+            feed_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=en-US&gl=US&ceid=US:en"
+            
+            feed = feedparser.parse(feed_url)
+            for entry in feed.entries[:3]:  # Juste les 3 premiers
+                if hasattr(entry, 'title'):
+                    try:
+                        entry_time = None
+                        if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                            entry_time = datetime(*entry.published_parsed[:6])
+                        elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
+                            entry_time = datetime(*entry.updated_parsed[:6])
+                        
+                        if entry_time:  # Accepter n'importe quelle date ici
+                            news_list.append({
+                                'title': entry.title,
+                                'link': entry.link,
+                                'date': entry_time.strftime("%d/%m/%Y %H:%M"),
+                                'source': "Google News"
+                            })
+                    except (AttributeError, TypeError):
+                        continue
+        except Exception:
+            pass
+    
+    # Trier par date (plus récentes d'abord) et limiter à 10 résultats max
+    return sorted(news_list, key=lambda x: x['date'], reverse=True)[:10]
+
+st.markdown("""
+<style>
+.news-container {
+    margin-top: 10px;
+}
+.news-item {
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background-color: #f9f5f2;
+    border-left: 4px solid #693112;
+}
+.news-source {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+.news-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #102040;
+}
+.news-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: #693112;
+    text-decoration: none;
+    font-weight: 500;
+}
+.news-link:hover {
+    text-decoration: underline;
+}
+</style>
+""", unsafe_allow_html=True)
+
+with st.spinner(f"Chargement des actualités pour {news_company}..."):
+    news = get_company_news(news_company, news_ticker)
+
+    if news:
+        for item in news:
+            with st.expander(item["title"]):
+                st.markdown(f"**Source:** {item['source']}")
+                st.markdown(f"**Date:** {item['date']}")
+                st.markdown(f"<a href='{item['link']}' target='_blank' class='news-link'>Lire l'article</a>", unsafe_allow_html=True)
+    else:
+        st.info(f"Aucune actualité récente trouvée pour {news_company} ({news_ticker})")
 
 # ─── Footer ───────────────────────────────────────────────────────────────────
 st.markdown(create_footer(), unsafe_allow_html=True)
