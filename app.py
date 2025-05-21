@@ -285,7 +285,7 @@ with c4:
 st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
 st.markdown('<div class="section-title">Actualités boursières des sociétés du Portefeuille</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="select-label">Sélectionnez une société pour voir ses actualités financières</div>', unsafe_allow_html=True)
+st.markdown('<div class="select-label">Sélectionnez une société pour prendre connaissance de son actualité boursière</div>', unsafe_allow_html=True)
 news_company = st.selectbox("", portfolio_df["Société"].tolist(), label_visibility="collapsed", key="news_company_selector")
 
 news_row = portfolio_df[portfolio_df["Société"] == news_company].iloc[0]
