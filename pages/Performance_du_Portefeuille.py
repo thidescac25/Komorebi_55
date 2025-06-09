@@ -1,4 +1,4 @@
-# 2_Performance_Analysis.py
+# Performance_du_Portefeuille.py
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -19,7 +19,7 @@ from src.visualization import plot_performance, plot_portfolio_simulation, calcu
 
 # Configuration de la page
 st.set_page_config(
-    page_title="Komorebi 55 - Analyse de Performance",
+    page_title="Komorebi 55 - Performance du Portefeuille",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -28,29 +28,60 @@ st.set_page_config(
 # Appliquer le CSS global perso
 apply_custom_css()
 
-st.markdown(
-    """
-    <style>
-      /* Centre le contenu des cellules */
-      .komorebi-table th,
-      .komorebi-table td {
+# CSS pour les boutons de navigation
+st.markdown("""
+<style>
+    .stButton > button {
+        background-color: #5D4037 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+        padding: 12px 20px !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    }
+    
+    .stButton > button:hover {
+        background-color: #4A2C20 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    }
+    
+    .stButton > button:active {
+        transform: translateY(0px) !important;
+    }
+
+    /* Centre le contenu des cellules */
+    .komorebi-table th,
+    .komorebi-table td {
         text-align: center !important;
         padding: 4px !important;  /* Réduire le padding */
-      }
-      /* Met le tableau à 80% de la largeur du conteneur, le centre, et fixe le layout */
-      .komorebi-table {
+    }
+    /* Met le tableau à 80% de la largeur du conteneur, le centre, et fixe le layout */
+    .komorebi-table {
         width: 80% !important;
         margin: 0 auto !important;
         table-layout: fixed !important;
         font-size: 0.85em !important;  /* Réduire la taille de la police */
-      }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Titre
-st.markdown(create_title("Analyse de la Performance depuis le début de l'investissement <span style='font-size:0.6em;'>(page 2/2)</span>"), unsafe_allow_html=True)
+st.markdown(create_title("Performance du Portefeuille - Komorebi Investments 55 <span style='font-size:0.6em;'>(page 2/2)</span>"), unsafe_allow_html=True)
+
+# Navigation
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("📊 Business Models", use_container_width=True):
+        st.switch_page("pages/Business_Models.py")
+with col2:
+    if st.button("📈 Performance du Portefeuille", use_container_width=True):
+        st.switch_page("pages/Performance_du_Portefeuille.py")
+
+st.markdown("---")
 
 # Chargement des données
 portfolio_df = load_portfolio_data()
