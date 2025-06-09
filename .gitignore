@@ -1,19 +1,15 @@
-# Environnements virtuels
+# ───── Environnements virtuels ────────────────────────────────────────────────
 .venv/
 venv/
 ENV/
 env/
-.env
-.env.*
 __pypackages__/
 
-# Secrets et configurations sensibles
-.streamlit/secrets.toml
-*.pem
-*.key
-*_private.*
+# Variables d’environnement
+.env
+.env.*
 
-# Fichiers de cache Python
+# ───── Cache et artefacts Python ───────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
@@ -28,9 +24,9 @@ nosetests.xml
 coverage.xml
 *.cover
 
-# Fichiers de build et distribution
-dist/
+# ───── Distribution / packaging ────────────────────────────────────────────────
 build/
+dist/
 *.egg-info/
 *.egg
 eggs/
@@ -39,79 +35,54 @@ develop-eggs/
 .installed.cfg
 MANIFEST
 
-# Fichiers de logs et données temporaires
+# ───── Secrets et configs sensibles ────────────────────────────────────────────
+.streamlit/secrets.toml
+
+# Si tu veux garder ton config.toml (et ignorer uniquement la sauvegarde automatique) :
+.streamlit/config.toml.backup
+
+*.pem
+*.key
+*_private.*
+
+# ───── Logs et temporaires ─────────────────────────────────────────────────────
 *.log
 logs/
 tmp/
 temp/
-.temp/
 *.tmp
+~*         # fichiers vim/emacs temporaires
+.*.swp     # swap Vim
+.DS_Store
+Thumbs.db
+Desktop.ini
 
-# Fichiers spécifiques à Jupyter
+# ───── Jupyter ─────────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
 *.ipynb
-profile_default/
-ipython_config.py
 
-# Fichiers spécifiques aux IDE/éditeurs
-# VSCode
+# ───── IDE / éditeurs ──────────────────────────────────────────────────────────
 .vscode/
 *.code-workspace
-# PyCharm/IntelliJ
 .idea/
 *.iml
 *.iws
 *.ipr
-# Sublime Text
 *.sublime-project
 *.sublime-workspace
-# Vim
-*.swp
-*.swo
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-# Atom
-.atom/
 
-# Fichiers spécifiques au système d'exploitation
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-# Linux
-.directory
-.Trash-*
-
-# Fichiers spécifiques à Streamlit (autres que secrets)
-.streamlit/config.toml.backup
-
-# Fichiers de données générés ou intermédiaires
+# ───── Données / modèles (si tu ne veux pas versionner tes dumps) ───────────────
 *.csv.gz
 *.parquet
 *.pickle
 *.pkl
-.~lock.*
-
-# Dossiers de modèles pré-entraînés
 models/
-*.model
 *.h5
-*.keras
 *.pt
 *.pth
 *.onnx
 
-# Fichiers de visualisation et rapports
+# ───── Fichiers de visualisation & rapports ────────────────────────────────────
 *.png
 *.jpg
 *.jpeg
@@ -120,7 +91,6 @@ models/
 *.pdf
 generated_reports/
 
-# Autres
-.DS_Store
+# ───── Autres ──────────────────────────────────────────────────────────────────
 node_modules/
 .history/
