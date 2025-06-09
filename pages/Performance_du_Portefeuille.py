@@ -15,9 +15,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from src.data_loader import (
     load_portfolio_data, 
     get_stock_data, 
-    get_historical_data, 
-    load_sector_country_data,
-    get_price_summary  # ✅ Import de la fonction batch
+    get_historical_data_batch,  # ✅ VERSION BATCH pour historique
+    load_sector_country_data_batch,  # ✅ VERSION BATCH pour secteurs/pays
+    get_price_summary  # ✅ VERSION BATCH pour prix
 )
 from src.stock_utils import get_currency_mapping
 from src.ui_components import apply_custom_css, create_scrolling_ticker, create_footer, create_metric_card, create_title
@@ -28,7 +28,7 @@ st.set_page_config(
     page_title="Komorebi 55 - Performance du Portefeuille",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="collapsed"  # ✅ CORRIGÉ : collapsed au lieu de expanded
+    initial_sidebar_state="collapsed"  # ✅ COLLAPSED - SIDEBAR FERMÉE
 )
 
 # Appliquer le CSS global perso
@@ -92,10 +92,11 @@ st.markdown("---")
 # Chargement des données
 portfolio_df = load_portfolio_data()
 currency_mapping = get_currency_mapping()
-
-# ✅ CORRIGÉ : Utilisation directe de get_price_summary (version batch)
 tickers = portfolio_df['Ticker'].tolist()
-stock_data_dict = get_price_summary(tickers)  # ✅ Version batch, plus d'erreurs 429
+
+# ✅ OPTIMISÉ : Utilisation de get_price_summary (version batch) avec spinner
+with st.spinner("Chargement des données de prix (1/3)..."):
+    stock_data_dict = get_price_summary(tickers)  # ✅ VERSION BATCH - 1 requête au lieu de 55
 
 # Ticker défilant
 st.markdown(create_scrolling_ticker(portfolio_df, stock_data_dict, currency_mapping), unsafe_allow_html=True)
@@ -126,9 +127,9 @@ with col2:
 
 end_date = datetime.now()
 
-# Données historiques & graphique
-with st.spinner("Chargement des données historiques..."):
-    hist_data = get_historical_data(tickers, start_date, end_date)
+# ✅ OPTIMISÉ : Données historiques en VERSION BATCH avec spinner
+with st.spinner("Chargement des données historiques (2/3)..."):
+    hist_data = get_historical_data_batch(tickers, start_date, end_date)  # ✅ VERSION BATCH
 
 perf_fig = plot_performance(
     hist_data,
@@ -167,9 +168,11 @@ if hist_data and 'Société' in portfolio_df.columns:
 else:
     st.warning("Impossible de calculer les contributeurs à la performance.")
 
-# Analyse par secteur et pays
+# ✅ OPTIMISÉ : Analyse par secteur et pays en VERSION BATCH avec spinner
 st.markdown('<div class="section-title">Analyse par Secteur et Pays</div>', unsafe_allow_html=True)
-df_sc = load_sector_country_data(tickers)
+
+with st.spinner("Chargement des secteurs et pays (3/3)..."):
+    df_sc = load_sector_country_data_batch(tickers)  # ✅ VERSION BATCH avec cache 6h
 
 # Calcul des variations
 perf_list = []

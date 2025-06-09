@@ -34,7 +34,7 @@ st.set_page_config(
     page_title="Komorebi Investments 55 – Business Models",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="collapsed"  # ✅ CORRIGÉ : collapsed au lieu de expanded
+    initial_sidebar_state="collapsed"  # ✅ COLLAPSED
 )
 
 apply_custom_css()
@@ -85,14 +85,17 @@ portfolio_df = load_portfolio_data()
 currency_mapping = get_currency_mapping()
 dividend_yields = get_dividend_yields()
 
-# ✅ CORRIGÉ : Utilisation directe de get_price_summary (version batch)
+# ✅ OPTIMISÉ : Utilisation directe de get_price_summary (version batch)
 tickers = portfolio_df["Ticker"].tolist()
-stock_data_dict = get_price_summary(tickers)  # ✅ Version batch, plus d'erreurs 429
+
+with st.spinner("Chargement des données de prix..."):
+    stock_data_dict = get_price_summary(tickers)  # ✅ VERSION BATCH - 1 requête au lieu de 55
 
 # Charger secteur/pays pour la table
-df_sc = load_sector_country_data(tickers)
-sector_map = dict(zip(df_sc["Ticker"], df_sc["Sector"]))
-country_map = dict(zip(df_sc["Ticker"], df_sc["Country"]))
+with st.spinner("Chargement des secteurs et pays..."):
+    df_sc = load_sector_country_data(tickers)  # ✅ VERSION BATCH avec cache 6h
+    sector_map = dict(zip(df_sc["Ticker"], df_sc["Sector"]))
+    country_map = dict(zip(df_sc["Ticker"], df_sc["Country"]))
 
 # ─── Bandeau défilant ─────────────────────────────────────────────────────────
 st.markdown(

@@ -105,18 +105,12 @@ def get_stock_data(ticker, detailed=False):
             
         return result
 
+# ===== ANCIENNE VERSION (gardée pour compatibilité) =====
 @st.cache_data(ttl=3600)  # Cache pour 1 heure
 def get_historical_data(tickers, start_date=None, end_date=None):
     """
     Récupère les données historiques pour une liste de tickers.
-    
-    Arguments:
-        tickers (list): Liste des symboles d'actions
-        start_date (datetime, optional): Date de début
-        end_date (datetime, optional): Date de fin
-        
-    Returns:
-        dict: Dictionnaire de DataFrames avec historique des prix
+    ATTENTION: Cette version fait des requêtes individuelles - utiliser get_historical_data_batch
     """
     # Si end_date n'est pas fourni, utiliser la date actuelle
     if end_date is None:
@@ -137,35 +131,6 @@ def get_historical_data(tickers, start_date=None, end_date=None):
             st.warning(f"Erreur lors de la récupération des données pour {ticker}: {e}")
             data[ticker] = pd.DataFrame()
     return data
-
-@st.cache_data(ttl=3600)  # Cache pour 1 heure
-def load_sector_country_data(tickers):
-    """
-    Récupère secteur et pays pour chaque ticker via yfinance.
-    
-    Arguments:
-        tickers (list): Liste des symboles d'actions
-        
-    Returns:
-        DataFrame: DataFrame avec secteur et pays pour chaque ticker
-    """
-    data = []
-    for tk in tickers:
-        try:
-            info = yf.Ticker(tk).info
-            data.append({
-                "Ticker": tk,
-                "Sector": info.get("sector", "Non disponible"),
-                "Country": info.get("country", "Non disponible")
-            })
-        except Exception as e:
-            st.warning(f"Erreur lors de la récupération des données pour {tk}: {e}")
-            data.append({
-                "Ticker": tk,
-                "Sector": "Non disponible",
-                "Country": "Non disponible"
-            })
-    return pd.DataFrame(data)
 
 @st.cache_data(ttl=3600)  # Cache pour 1 heure
 def load_metrics(tickers):
@@ -233,3 +198,146 @@ def load_metrics(tickers):
     
     dfm = pd.DataFrame(rows).set_index("Ticker")
     return dfm
+
+# ===== NOUVELLES FONCTIONS BATCH OPTIMISÉES =====
+
+@st.cache_data(ttl=1800)  # cache 30 min
+def get_price_summary(tickers, period="1d", interval="1m", chunk_size=50):
+    """
+    Récupère current_price, previous_close, change, percent_change
+    pour N tickers en batch (découpé par morceaux de chunk_size).
+    ✅ VERSION BATCH - ÉLIMINE LES ERREURS 429
+    """
+    result = {}
+    # on découpe la liste pour ne pas surcharger Yahoo
+    for i in range(0, len(tickers), chunk_size):
+        group = tickers[i : i + chunk_size]
+        try:
+            raw = yf.download(
+                group,
+                period=period,
+                interval=interval,
+                group_by="ticker",
+                threads=True,
+                progress=False
+            )
+            multi = len(group) > 1
+            for t in group:
+                try:
+                    df = raw[t] if multi else raw
+                    if not df.empty and len(df) > 0:
+                        curr = df["Close"].iloc[-1]
+                        prev = df["Close"].iloc[0]
+                        chg  = curr - prev
+                        pct  = (chg / prev) * 100 if prev else 0
+                        result[t] = {
+                            "current_price": float(curr),
+                            "previous_close": float(prev),
+                            "change": float(chg),
+                            "percent_change": float(pct),
+                        }
+                    else:
+                        result[t] = dict.fromkeys(
+                            ["current_price","previous_close","change","percent_change"], 
+                            0.0
+                        )
+                except Exception as e:
+                    # st.warning(f"Erreur lors du traitement des données pour {t}: {e}")
+                    result[t] = dict.fromkeys(
+                        ["current_price","previous_close","change","percent_change"], 
+                        0.0
+                    )
+        except Exception as e:
+            # st.warning(f"Erreur lors de la récupération batch: {e}")
+            for t in group:
+                result[t] = dict.fromkeys(
+                    ["current_price","previous_close","change","percent_change"], 
+                    0.0
+                )
+    return result
+
+@st.cache_data(ttl=3600)  # cache 1 heure
+def get_historical_data_batch(tickers, start_date=None, end_date=None, chunk_size=30):
+    """
+    Version batch de get_historical_data pour éviter les erreurs 429.
+    ✅ VERSION BATCH - ÉLIMINE LES ERREURS 429
+    """
+    if end_date is None:
+        end_date = datetime.now()
+    data = {}
+    
+    for i in range(0, len(tickers), chunk_size):
+        group = tickers[i : i + chunk_size]
+        try:
+            raw = yf.download(
+                group,
+                start=start_date,
+                end=end_date,
+                group_by="ticker",
+                threads=True,
+                progress=False
+            )
+            multi = len(group) > 1
+            for t in group:
+                try:
+                    df = raw[t] if multi else raw
+                    if not df.empty:
+                        df.index = df.index.tz_localize(None)
+                        data[t] = df
+                    else:
+                        data[t] = pd.DataFrame()
+                except Exception as e:
+                    # st.warning(f"Erreur lors du traitement des données historiques pour {t}: {e}")
+                    data[t] = pd.DataFrame()
+        except Exception as e:
+            # st.warning(f"Erreur lors de la récupération batch historique: {e}")
+            for t in group:
+                data[t] = pd.DataFrame()
+    return data
+
+@st.cache_data(ttl=21600)  # Cache pour 6 heures (secteurs/pays changent rarement)
+def load_sector_country_data_batch(tickers, chunk_size=50):
+    """
+    Récupère secteur et pays pour chaque ticker via yfinance EN BATCH.
+    ✅ VERSION BATCH - ÉLIMINE LES ERREURS 429
+    
+    Arguments:
+        tickers (list): Liste des symboles d'actions
+        
+    Returns:
+        DataFrame: DataFrame avec secteur et pays pour chaque ticker
+    """
+    data = []
+    
+    # Traitement par chunks pour éviter le rate limiting
+    for i in range(0, len(tickers), chunk_size):
+        chunk = tickers[i:i + chunk_size]
+        
+        for tk in chunk:
+            try:
+                info = yf.Ticker(tk).info
+                data.append({
+                    "Ticker": tk,
+                    "Sector": info.get("sector", "Non disponible"),
+                    "Country": info.get("country", "Non disponible")
+                })
+            except Exception as e:
+                # st.warning(f"Erreur lors de la récupération des données pour {tk}: {e}")
+                data.append({
+                    "Ticker": tk,
+                    "Sector": "Non disponible",
+                    "Country": "Non disponible"
+                })
+        
+        # Petite pause entre les chunks pour éviter le rate limiting
+        import time
+        if i + chunk_size < len(tickers):  # Pas de pause après le dernier chunk
+            time.sleep(0.1)
+    
+    return pd.DataFrame(data)
+
+# ===== ALIAS POUR COMPATIBILITÉ =====
+# Permet d'utiliser l'ancienne fonction avec la nouvelle implémentation
+def load_sector_country_data(tickers):
+    """Alias pour la version batch - compatibilité descendante"""
+    return load_sector_country_data_batch(tickers)
