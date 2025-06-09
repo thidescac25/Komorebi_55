@@ -16,8 +16,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 from data_loader import (
     load_portfolio_data, 
     get_stock_data, 
-    load_sector_country_data,
-    get_price_summary  # ✅ Import de la fonction batch
+    load_sector_country_data
 )
 from stock_utils import get_currency_mapping, get_dividend_yields
 from ui_components import (
@@ -85,17 +84,21 @@ portfolio_df = load_portfolio_data()
 currency_mapping = get_currency_mapping()
 dividend_yields = get_dividend_yields()
 
-# ✅ OPTIMISÉ : Utilisation directe de get_price_summary (version batch)
-tickers = portfolio_df["Ticker"].tolist()
+# ✅ RETOUR À L'ANCIENNE VERSION FONCTIONNELLE
+@st.cache_data(ttl=60)
+def get_all_stock_data(tickers):
+    d = {}
+    for t in tickers:
+        d[t] = get_stock_data(t)
+    return d
 
-with st.spinner("Chargement des données de prix..."):
-    stock_data_dict = get_price_summary(tickers)  # ✅ VERSION BATCH - 1 requête au lieu de 55
+tickers = portfolio_df["Ticker"].tolist()
+stock_data_dict = get_all_stock_data(tickers)
 
 # Charger secteur/pays pour la table
-with st.spinner("Chargement des secteurs et pays..."):
-    df_sc = load_sector_country_data(tickers)  # ✅ VERSION BATCH avec cache 6h
-    sector_map = dict(zip(df_sc["Ticker"], df_sc["Sector"]))
-    country_map = dict(zip(df_sc["Ticker"], df_sc["Country"]))
+df_sc = load_sector_country_data(tickers)
+sector_map = dict(zip(df_sc["Ticker"], df_sc["Sector"]))
+country_map = dict(zip(df_sc["Ticker"], df_sc["Country"]))
 
 # ─── Bandeau défilant ─────────────────────────────────────────────────────────
 st.markdown(

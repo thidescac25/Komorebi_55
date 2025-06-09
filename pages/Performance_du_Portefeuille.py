@@ -11,14 +11,8 @@ from datetime import datetime
 # Ajouter le dossier src au chemin d'importation
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Importer les modules personnalisés
-from src.data_loader import (
-    load_portfolio_data, 
-    get_stock_data, 
-    get_historical_data_batch,  # ✅ VERSION BATCH pour historique
-    load_sector_country_data_batch,  # ✅ VERSION BATCH pour secteurs/pays
-    get_price_summary  # ✅ VERSION BATCH pour prix
-)
+# Importer les modules personnalisés - ANCIENNE VERSION
+from src.data_loader import load_portfolio_data, get_stock_data, get_historical_data, load_sector_country_data
 from src.stock_utils import get_currency_mapping
 from src.ui_components import apply_custom_css, create_scrolling_ticker, create_footer, create_metric_card, create_title
 from src.visualization import plot_performance, plot_portfolio_simulation, calculate_portfolio_stats, display_top_contributors, create_bar_charts
@@ -92,11 +86,14 @@ st.markdown("---")
 # Chargement des données
 portfolio_df = load_portfolio_data()
 currency_mapping = get_currency_mapping()
-tickers = portfolio_df['Ticker'].tolist()
 
-# ✅ OPTIMISÉ : Utilisation de get_price_summary (version batch) avec spinner
-with st.spinner("Chargement des données de prix (1/3)..."):
-    stock_data_dict = get_price_summary(tickers)  # ✅ VERSION BATCH - 1 requête au lieu de 55
+# ✅ RETOUR À L'ANCIENNE VERSION FONCTIONNELLE
+@st.cache_data(ttl=60)
+def get_all_stock_data(tickers):
+    return {t: get_stock_data(t) for t in tickers}
+
+tickers = portfolio_df['Ticker'].tolist()
+stock_data_dict = get_all_stock_data(tickers)
 
 # Ticker défilant
 st.markdown(create_scrolling_ticker(portfolio_df, stock_data_dict, currency_mapping), unsafe_allow_html=True)
@@ -127,9 +124,9 @@ with col2:
 
 end_date = datetime.now()
 
-# ✅ OPTIMISÉ : Données historiques en VERSION BATCH avec spinner
-with st.spinner("Chargement des données historiques (2/3)..."):
-    hist_data = get_historical_data_batch(tickers, start_date, end_date)  # ✅ VERSION BATCH
+# Données historiques & graphique - ANCIENNE VERSION
+with st.spinner("Chargement des données historiques..."):
+    hist_data = get_historical_data(tickers, start_date, end_date)
 
 perf_fig = plot_performance(
     hist_data,
@@ -168,11 +165,9 @@ if hist_data and 'Société' in portfolio_df.columns:
 else:
     st.warning("Impossible de calculer les contributeurs à la performance.")
 
-# ✅ OPTIMISÉ : Analyse par secteur et pays en VERSION BATCH avec spinner
+# Analyse par secteur et pays - ANCIENNE VERSION
 st.markdown('<div class="section-title">Analyse par Secteur et Pays</div>', unsafe_allow_html=True)
-
-with st.spinner("Chargement des secteurs et pays (3/3)..."):
-    df_sc = load_sector_country_data_batch(tickers)  # ✅ VERSION BATCH avec cache 6h
+df_sc = load_sector_country_data(tickers)
 
 # Calcul des variations
 perf_list = []
