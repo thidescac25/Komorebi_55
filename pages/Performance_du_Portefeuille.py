@@ -12,7 +12,13 @@ from datetime import datetime
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Importer les modules personnalisés
-from src.data_loader import load_portfolio_data, get_stock_data, get_historical_data, load_sector_country_data
+from src.data_loader import (
+    load_portfolio_data, 
+    get_stock_data, 
+    get_historical_data, 
+    load_sector_country_data,
+    get_price_summary  # ✅ Import de la fonction batch
+)
 from src.stock_utils import get_currency_mapping
 from src.ui_components import apply_custom_css, create_scrolling_ticker, create_footer, create_metric_card, create_title
 from src.visualization import plot_performance, plot_portfolio_simulation, calculate_portfolio_stats, display_top_contributors, create_bar_charts
@@ -22,7 +28,7 @@ st.set_page_config(
     page_title="Komorebi 55 - Performance du Portefeuille",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # ✅ CORRIGÉ : collapsed au lieu de expanded
 )
 
 # Appliquer le CSS global perso
@@ -87,12 +93,9 @@ st.markdown("---")
 portfolio_df = load_portfolio_data()
 currency_mapping = get_currency_mapping()
 
-@st.cache_data(ttl=60)
-def get_all_stock_data(tickers):
-    return {t: get_stock_data(t) for t in tickers}
-
+# ✅ CORRIGÉ : Utilisation directe de get_price_summary (version batch)
 tickers = portfolio_df['Ticker'].tolist()
-stock_data_dict = get_all_stock_data(tickers)
+stock_data_dict = get_price_summary(tickers)  # ✅ Version batch, plus d'erreurs 429
 
 # Ticker défilant
 st.markdown(create_scrolling_ticker(portfolio_df, stock_data_dict, currency_mapping), unsafe_allow_html=True)

@@ -16,7 +16,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 from data_loader import (
     load_portfolio_data, 
     get_stock_data, 
-    load_sector_country_data
+    load_sector_country_data,
+    get_price_summary  # ✅ Import de la fonction batch
 )
 from stock_utils import get_currency_mapping, get_dividend_yields
 from ui_components import (
@@ -33,7 +34,7 @@ st.set_page_config(
     page_title="Komorebi Investments 55 – Business Models",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed"  # ✅ CORRIGÉ : collapsed au lieu de expanded
 )
 
 apply_custom_css()
@@ -84,15 +85,9 @@ portfolio_df = load_portfolio_data()
 currency_mapping = get_currency_mapping()
 dividend_yields = get_dividend_yields()
 
-@st.cache_data(ttl=60)
-def get_all_stock_data(tickers):
-    d = {}
-    for t in tickers:
-        d[t] = get_stock_data(t)
-    return d
-
+# ✅ CORRIGÉ : Utilisation directe de get_price_summary (version batch)
 tickers = portfolio_df["Ticker"].tolist()
-stock_data_dict = get_all_stock_data(tickers)
+stock_data_dict = get_price_summary(tickers)  # ✅ Version batch, plus d'erreurs 429
 
 # Charger secteur/pays pour la table
 df_sc = load_sector_country_data(tickers)
